@@ -9,4 +9,4 @@ resources:
   - backup.yaml
 images:
   - name: ghcr.io/eumelnet/brieselang-news
-    newTag: c2ad3a2b3ecaee0a40b86fbdda07a9efbd9ef66c
+    newTag: d4fec166d6787bf4b516cdf23519c83c22e3093f
