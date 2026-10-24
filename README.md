@@ -51,6 +51,14 @@ kubectl -n brieselang-news exec -it deployment/web -- python manage.py createsup
 
 Editorial credentials are created interactively, not included in images or manifests. Add/disable sources in the editorial UI; each new source format needs a matching adapter and an allowed hostname in `news/collect.py`.
 
+For the initial pilot an editorial superuser `redaktion` has been provisioned. Its generated password is stored in the namespace's `news-editor` Secret. Retrieve it locally with:
+
+```sh
+kubectl -n brieselang-news get secret news-editor -o jsonpath='{.data.password}' | base64 -d
+```
+
+Log in at `/redaktion/`. After changing the password in Django, update or remove the bootstrap Secret accordingly.
+
 ## Operation and recovery
 
 ```sh
@@ -64,3 +72,13 @@ Source health is public at `/quellen/`; HTTP readiness at `/healthz` verifies th
 Backups are custom-format `pg_dump` files on the `backups` PVC. Restore into an empty database with `pg_restore -U news -d news <file>`. Verify restore separately before replacing data. Local-path database and backup volumes share the node failure domain; copy dumps to your existing off-node backup system for disaster recovery. No HA is implied by this single-node pilot.
 
 Before opening as a regular public service, fill in the operator's actual imprint/contact details and retention policy. The pilot currently identifies itself as such and links to this project for contact.
+
+## Initial deployment verification (2026-10-24)
+
+- GitHub Actions run `40064664774`: tests and image build successful.
+- Deployed image: `ghcr.io/eumelnet/brieselang-news:c2ad3a2b3ecaee0a40b86fbdda07a9efbd9ef66c`.
+- Valid Let's Encrypt certificate; external HTTPS pages, stylesheet, RSS and CSRF-protected tip submission checked.
+- 46 source items imported (20 municipal news, 20 events, 5 closures, 1 opening).
+- Second in-cluster collection: zero new items and zero changes.
+- Database dump restored into a separate temporary database: all 46 stories present; temporary database removed afterwards.
+- Temporary test submission removed after successful verification.
