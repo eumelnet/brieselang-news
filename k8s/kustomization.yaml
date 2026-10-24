@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: brieselang-news
+resources:
+  - namespace.yaml
+  - database.yaml
+  - application.yaml
+  - collector.yaml
+  - backup.yaml
+images:
+  - name: ghcr.io/eumelnet/brieselang-news
+    newTag: main

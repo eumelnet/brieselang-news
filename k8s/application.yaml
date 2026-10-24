@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: news-config
+data:
+  DB_HOST: postgres
+  SITE_URL: https://brieselang-news.e.mcsps.de
+  ALLOWED_HOSTS: brieselang-news.e.mcsps.de,localhost,127.0.0.1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: news-web
+  template:
+    metadata:
+      labels:
+        app: news-web
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: migrate
+          image: ghcr.io/eumelnet/brieselang-news:main
+          command: [python, manage.py, migrate, --noinput]
+          envFrom:
+            - configMapRef:
+                name: news-config
+            - secretRef:
+                name: news-secrets
+      containers:
+        - name: web
+          image: ghcr.io/eumelnet/brieselang-news:main
+          envFrom:
+            - configMapRef:
+                name: news-config
+            - secretRef:
+                name: news-secrets
+          ports:
+            - containerPort: 8000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: localhost
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: news-web
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: news
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [brieselang-news.e.mcsps.de]
+      secretName: news-tls
+  rules:
+    - host: brieselang-news.e.mcsps.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80

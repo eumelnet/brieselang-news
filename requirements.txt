@@ -1,0 +1,6 @@
+Django>=5.2,<5.3
+gunicorn>=23,<24
+psycopg[binary]>=3.2,<4
+httpx>=0.28,<0.29
+beautifulsoup4>=4.13,<5
+whitenoise>=6.9,<7
