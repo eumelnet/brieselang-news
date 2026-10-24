@@ -55,6 +55,15 @@ class CollectionTests(TestCase):
     def test_csrf_is_required_for_tips(self):
         self.assertEqual(Client(enforce_csrf_checks=True).post("/hinweis/", {"text": "Spam"}).status_code, 403)
 
+    def test_submitted_tip_is_accessible_in_editorial_admin(self):
+        from django.contrib.auth import get_user_model
+
+        self.client.post("/hinweis/", {"text": "Neues Karussell am Nymphensee"})
+        user = get_user_model().objects.create_superuser(username="editor", password="test-password")
+        self.client.force_login(user)
+        self.assertContains(self.client.get("/redaktion/"), "Hinweise")
+        self.assertContains(self.client.get("/redaktion/news/tip/"), "Neues Karussell am Nymphensee")
+
     def test_public_pages_and_feed(self):
         for path in ["/", "/quellen/", "/hinweis/", "/healthz", "/feed.xml"]:
             self.assertEqual(self.client.get(path).status_code, 200)

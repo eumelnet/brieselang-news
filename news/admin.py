@@ -33,3 +33,5 @@ class StoryAdmin(admin.ModelAdmin):
 class TipAdmin(admin.ModelAdmin):
     list_display = ["__str__", "created_at", "status"]
     list_filter = ["status"]
+    search_fields = ["text", "url"]
+    ordering = ["-created_at"]

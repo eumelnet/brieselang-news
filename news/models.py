@@ -61,5 +61,9 @@ class Tip(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default="neu", choices=[("neu", "Neu"), ("recherche", "In Recherche"), ("erledigt", "Erledigt")])
 
+    class Meta:
+        verbose_name = "Hinweis"
+        verbose_name_plural = "Hinweise"
+
     def __str__(self):
         return self.text[:80]
